@@ -6,7 +6,7 @@ const userModel = require('./../models/userModel');
 const postChat = async (req, res, next) => {
   try {
     const reqBody = req.body;
-    const receiverId=reqBody.receiver.id;
+    console.log(reqBody)
     if (!reqBody.senderId || !receiverId) {
       return res.send("No User Exists!");
     }
@@ -108,7 +108,7 @@ const createUserChat=async(req,res,next)=>{
       const objId1 = `${receiver.id}`;
       mem.push(objId1)
       const newChat = {
-        chatname: receive.username,
+        chatname: receiver.username,
         isGroup: false,
         members: mem,
         messages: [],
