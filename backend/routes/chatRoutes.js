@@ -1,13 +1,13 @@
 const express=require('express');
-const { getChats, postChat, searchUser, createUserChat } = require('../controllers/chatController');
 const { route } = require('./authRoutes');
 const auth = require('../middlewares/auth');
+const { getChats, searchUser, createUserChat, getCurrChat } = require('../controllers/chatController');
 
 const router=express.Router();
 
 
 router.route('/get')
-.post(auth,postChat)
+.post(auth,getCurrChat)
 
 router.route('/create')
 .post(auth,createUserChat)
@@ -18,9 +18,5 @@ router.route('/search')
 
 router.route('/all')
 .get(auth,getChats)
-
-
-
-
 
 module.exports=router;

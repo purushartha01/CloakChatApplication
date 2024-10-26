@@ -11,6 +11,7 @@ const { port, mongo_srv } = require('./config/config.js');
 const logger = require('./middlewares/logger.js');
 const authRoutes = require('./routes/authRoutes.js');
 const chatRoutes=require('./routes/chatRoutes.js');
+const msgRoutes=require('./routes/msgRoutes.js');
 const { notFound, errorHandler } = require('./middlewares/errorHandler.js');
 
 
@@ -37,6 +38,7 @@ app.use(express.urlencoded({ extended: false }))
 
 app.use('/api/v1', authRoutes);
 app.use('/api/v1/chat',chatRoutes);
+app.use('/api/v1/msg',msgRoutes);
 
 
 app.get('/', (req, res) => {
@@ -59,21 +61,26 @@ const io = new Server(server, {
 io.on('connection', (socket) => {
     console.log("Socket connected " + socket.id)
     socket.on("setup", (userData) => {
-        socket.join(userData._id);
-        console.log(userData._id + " connected")
+        socket.join(userData.id);
+        console.log(userData.id + " connected")
         socket.emit("connected");
     });
 
-    socket.on('join-chat',(room)=>{
+    socket.on('join-chat',(chat)=>{
+        room=chat._id;
         console.log(socket.id+" joined "+room);
         socket.join(room);
     })
 
-    socket.on('typing',(room)=>{
+    socket.on('typing',(chat)=>{
+        room=chat._id;
+        console.log(socket.id+" is typing in "+room)
         socket.in(room).emit('typing');
     })
 
-    socket.on('stop-typing',(room)=>{
+    socket.on('stop-typing',(chat)=>{
+        room=chat._id;
+        console.log(socket.id+" has stopped typing in "+room)
         socket.in(room).emit('stop-typing')
     })
 
@@ -89,7 +96,6 @@ io.on('connection', (socket) => {
             if(mem.id===msg.sender.id){
                 return;
             }
-
             // console.log("Received message from")
             //TODO: Make sure the socket ID is same as user.id
             socket.in(user.id).emit('msg-received',msg);

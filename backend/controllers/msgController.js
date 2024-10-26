@@ -1,14 +1,15 @@
 
 // Finally add the below code in controllers/message.js
 
-import Message from "../models/message.js";
-import User from "../models/user.js";
-import Chat from "../models/chat.js";
+const Message = require("./../models/msgModel.js");
+const User = require("./../models/userModel.js");
+const Chat = require("./../models/chatModel.js");
 
 const sendMessage = async (req, res) => {
-  const { message, chatId } = req.body;
+  const { messageContent, sender, chatId } = req.body;
 
-  if (!message || !chatId) {
+  console.log(messageContent, sender, chatId)
+  if (!messageContent || !chatId || !sender) {
     console.log("Invalid data passed into request");
 
     return res
@@ -17,22 +18,24 @@ const sendMessage = async (req, res) => {
   }
 
   var newMessage = {
-    sender: req.user._id,
-    message: message,
-    chat: chatId,
+    messageContent,
+    sender,
+    chatId
   };
+
+  console.log("new msg", newMessage);
 
   try {
     let m = await Message.create(newMessage);
 
     m = await m.populate("sender", "name");
-    m = await m.populate("chat");
+    m = await m.populate("chatId");
     m = await User.populate(m, {
-      path: "chat.users",
+      path: "chatId.members",
       select: "name email _id",
     });
 
-    await Chat.findByIdAndUpdate(chatId, { latestMessage: m }, { new: true });
+    m = await Chat.findByIdAndUpdate(chatId, { $push: { messages: m }, latestMsg: m }, { new: true });
 
     res.status(200).json(m);
   } catch (error) {
@@ -40,21 +43,25 @@ const sendMessage = async (req, res) => {
   }
 };
 
-const allMessages = async (req, res) => {
+const allMessages = async (req, res,next) => {
   try {
-    const { chatId } = req.params;
+    const { chatId } = req.body;
 
-    const getMessage = await Message.find({ chat: chatId })
-      .populate("sender", "name email _id")
-      .populate("chat");
+    console.log("CHATID: ",chatId)
+    const getMessage = await Message.find({ chatId: chatId })
+      .populate("sender", "username email _id")
+      .populate("chatId");
+
+    console.log(getMessage)
+
 
     res.status(200).json(getMessage);
-  } catch (error) {
-    res.status(400).json(error.message);
+  } catch (err) {
+    console.log(err)
+    next(err)
   }
 };
 
-export { allMessages, sendMessage };
-    
-    
-    
+module.exports = { allMessages, sendMessage };
+
+

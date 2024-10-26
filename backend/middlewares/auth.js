@@ -5,7 +5,7 @@ const { getUserById } = require('../services/userServices.js');
 module.exports = async (req, res, next) => {
     try {
         const token = (req.headers.authorization).split(" ")[1];
-        console.log("ACCESS TOKEN: ", token);
+        // console.log("ACCESS TOKEN: ", token);
         const isVerifiedUser = jwt.verify(token, ACCESS_TOKEN, { algorithms: "HS256" });
         if (isVerifiedUser) {
             req.currUserId = isVerifiedUser.id;
@@ -13,19 +13,18 @@ module.exports = async (req, res, next) => {
         }
     }
     catch (err) {
-        console.log("1st try's caught Error: ", err.message, "\nLocation: ", err.stack)
+        // console.log("1st try's caught Error: ", err.message, "\nLocation: ", err.stack)
         try {
             if (err.name === "TokenExpiredError") {
                 const refreshTok = req?.cookies?.jwt;
-                console.log("REFRESH TOKEN: ", refreshTok);
+                // console.log("REFRESH TOKEN: ", refreshTok);
                 //TODO:Handle refresh token invalid or not present scenario
                 if (refreshTok) {
                     const decoded = jwt.verify(refreshTok, REFRESH_TOKEN, { algorithms: "HS256" });
                     // console.log(decoded);
                     const foundUser = await getUserById(decoded.id);
-                    console.log(foundUser);
+                    // console.log(foundUser);
                     if (foundUser) {
-
                         const accessToken = jwt.sign({ id: foundUser.id, email: foundUser.email }, ACCESS_TOKEN, jwt_options_access);
 
                         const refreshToken = jwt.sign({ id: foundUser.id, email: foundUser.email }, REFRESH_TOKEN, jwt_options_refresh);

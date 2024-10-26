@@ -14,8 +14,9 @@ const chatSchema=new mongoose.Schema(
         },
         members:[{
             type: mongoose.Types.ObjectId,
+            ref:'user',
             required:true,
-            ref:'user'
+            // unique:true
         }],
         messages:[{
             type: mongoose.Types.ObjectId,
@@ -27,7 +28,8 @@ const chatSchema=new mongoose.Schema(
         },
         chatAdmin:[{
             type: mongoose.Types.ObjectId,
-            ref:'user'
+            ref:'user',
+            // unique:true
         }]
     },
     {

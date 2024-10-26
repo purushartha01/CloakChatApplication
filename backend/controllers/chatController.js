@@ -2,53 +2,68 @@ const { default: mongoose } = require('mongoose');
 const { getAllUsersByEmail } = require('../services/userServices');
 const chatModel = require('./../models/chatModel');
 const userModel = require('./../models/userModel');
+const msgModel = require('../models/msgModel');
 
-const postChat = async (req, res, next) => {
+const getCurrChat = async (req, res, next) => {
   try {
-    const reqBody = req.body;
-    console.log(reqBody)
-    if (!reqBody.senderId || !receiverId) {
+    const { senderId, chatObj } = req.body;
+    if (!senderId || !chatObj) {
       return res.send("No User Exists!");
     }
 
-    const chat = await chatModel.find({
-      isGroup: false,
-      $and: [
-        { members: { $elemMatch: { $eq: reqBody.receiver._id } } },
-        { members: { $elemMatch: { $eq: reqBody.senderId } } },
-      ],
-    })
+    // console.log(senderId,chatObj)
+
+    const chat = await chatModel.findById(chatObj._id)
+      .populate("members", "-password")
+      .populate("chatAdmin", "-password")
+      .populate("latestMsg")
+      .populate("messages")
+      .sort({ updatedAt: -1 })
+
+
+      // const msgs=await msgModel.populate(chat,{
+      //   path:"messages"
+      // })
+
+
+      // console.log(msgs);
+
+    // const updatedChat = await chatModel.findByIdAndUpdate(chat._id, { members: chat.members, messages: chat.messages, chatAdmin: chat.chatAdmin, latestMsg: chat.latestMsg }, { new: true })
+    // const updatedChat=await chatModel.findOneAndReplace(chat._id,{chat},{new:true})
+    console.log( "CHAT: ", chat)
     //TODO: populate messages subdocument
     // .populate("messages")
 
-    console.log("CHAT: ", chat," chat length: ",chat.length)
+    // console.log("CHAT: ", chat)
 
-    if (chat.length === 0) {
-      const mem = []
-      const objId = `${reqBody.senderId}`;
-      mem.push(objId)
-      const objId1 = `${receiverId}`;
-      mem.push(objId1)
-      const newChat = {
-        chatname: reqBody.receiver.chatname,
-        isGroup: false,
-        members: mem,
-        messages: [],
-        chatAdmin: mem
-      }
-
-      console.log("newChat: ", newChat)
-
-      const isChatCreated = await chatModel.create(newChat);
-
-      res.status(200);
-      res.json({ status: 'ok', chat: [isChatCreated] })
-    } else {
-      res.status(200);
-      res.json({ status: 'ok', chat: chat })
-    }
+    // if (!chat) {
+    //   console.log("Inside if statement: ")
+    //   const mem = []
+    //   const objId = `${senderId}`;
+    //   mem.push(objId)
+    //   const objId1 = `${receiver._id}`;
+    //   mem.push(objId1)
 
 
+    //   console.log(mem)
+
+    //   const newChat = {
+    //     chatname: receiver.chatname,
+    //     isGroup: false,
+    //     members: mem,
+    //     messages: [],
+    //     chatAdmin: mem
+    //   }
+
+    //   const isChatCreated = await chatModel.create(newChat);
+    //   console.log('\n\n')
+
+    //   res.status(200);
+    //   res.json({ status: 'ok',message:"New Chat created", chat: [isChatCreated] })
+    // } else {
+    res.status(200);
+    res.json({ status: 'ok', message: "Chat found", chat})
+    // }
     //     .populate("members", "-password")
     // .populate("latestMsg");
 
@@ -80,28 +95,35 @@ const postChat = async (req, res, next) => {
   }
 };
 
-const createUserChat=async(req,res,next)=>{
-  try{
+const createUserChat = async (req, res, next) => {
+  try {
 
-    const {senderId,receiver} = req.body;
-    console.log(senderId,receiver);
+    const { senderId, receiver } = req.body;
+    console.log(senderId, receiver);
     if (!senderId || !receiver.id) {
       return res.send("No User Exists!");
     }
 
-    const chat = await chatModel.find({
+    console.log(senderId, receiver.id);
+
+    const chat = await chatModel.findOne({
       isGroup: false,
       $and: [
-        { members: { $elemMatch: { $eq: receiver._id } } },
+        { members: { $elemMatch: { $eq: receiver.id } } },
         { members: { $elemMatch: { $eq: senderId } } },
       ],
     })
-    //TODO: populate messages subdocument
-    // .populate("messages")
+      .populate("members", "-password")
+      .populate("chatAdmin", "-password")
+      .populate("latestMsg")
+      .populate("messages")
+      .sort({ updatedAt: -1 });
 
-    console.log("CHAT: ", chat," chat length: ",chat.length)
+    console.log("CHAT: ", chat)
 
-    if (chat.length === 0) {
+
+
+    if (!chat) {
       const mem = []
       const objId = `${senderId}`;
       mem.push(objId)
@@ -118,17 +140,22 @@ const createUserChat=async(req,res,next)=>{
       console.log("newChat: ", newChat)
 
       const isChatCreated = await chatModel.create(newChat);
+      console.log('\n\n')
 
       res.status(200);
       res.json({ status: 'ok', chat: [isChatCreated] })
     } else {
+
+      const chatData = userModel.findByIdAndUpdate(chat.id, chat, { new: true })
+
+      // console.log("CHAT: ", JSON.stringify(chatData))
       res.status(200);
-      res.json({ status: 'ok', chat: chat })
+      res.json({ status: 'ok', chat: chatData })
     }
 
 
   }
-  catch(err){
+  catch (err) {
     console.log(err);
     res.status(404);
     next(err);
@@ -173,18 +200,20 @@ const getChats = async (req, res, next) => {
     console.log(req.currUserId);
     const chat = await chatModel.find({
       isGroup: false,
-      $and: [
-      { members: { $elemMatch: { $eq: req.currUserId } } }
-      ],}
+      $or: [
+        { members: { $elemMatch: { $eq: req.currUserId } } }
+      ],
+    }
     )
-    .populate("members", "-password")
-    .populate("chatAdmin", "-password")
-    // .populate("latestMsg")
-    // .sort({ updatedAt: -1 });
+      .populate("members", "-password")
+      .populate("chatAdmin", "-password")
+      .populate("latestMsg")
+      .populate("messages")
+      .sort({ updatedAt: -1 });
 
-    console.log(chat)
+    // console.log(JSON.stringify(chat))
 
-    res.status(201).json({ status: 'ok', chats:chat });
+    res.status(201).json({ status: 'ok', chats: chat });
   }
   catch (err) {
     console.log(err)
@@ -289,7 +318,7 @@ const removeFromGroup = async (req, res) => {
 };
 
 module.exports = {
-  postChat,
+  getCurrChat,
   getChats,
   createGroup,
   removeFromGroup,

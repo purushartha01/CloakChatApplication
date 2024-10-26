@@ -6,37 +6,49 @@ import { useEffect, useState } from "react";
 import { apiURL, createAuthHeader } from "../config/config";
 import { useAuth } from "./../hooks/AuthProvider";
 import SearchedNames from "../components/SearchNames";
+import { io } from 'socket.io-client';
+
+
+let socket, selectedChatCompare;
 
 const ChatPage = () => {
 
     const { user, token } = useAuth();
 
     const [chatData, setChatData] = useState({});
+    const [updateSideBar,setUpdateSideBar]=useState(1);
     const [allChats, setAllChats] = useState([]);
-    const [allSearchedChats, setAllSearchedChats] = useState([]);
+    const [allChatsBackup, setAllChatsBackup] = useState([]);
+    const [allSearchedUsers, setAllSearchedUsers] = useState([]);
     const [loading, setLoading] = useState(false);
     const [searchedChat, setSearchedChat] = useState('');
-    const [currentChat, setCurrentChat] = useState('');
+    const [currentChat, setCurrentChat] = useState(null);
+    const [socketConnected, setSocketConnected] = useState(false)
+    // const [isChatLoading, setIsChatLoading] = useState()
+
 
     const toast = useToast();
 
 
     //TODO: make different component for searched users and corresponding fetch method
-
-    const fetchChatViaSearch = async (e, chat) => {
+    const fetchChatViaSearch = async (e, currUser) => {
         e.preventDefault();
-        console.log(chat)
+        // console.log(chat)
 
-        const finalChatObj = { senderId: user.id, receiver: chat }
-        console.log(finalChatObj)
+        const finalChatObj = { senderId: user.id, receiver: currUser }
+        // console.log(finalChatObj)
         const authHeader = createAuthHeader(token)
 
-        console.log(authHeader);
+        // console.log(authHeader);
         await apiURL.post('/api/v1/chat/create', finalChatObj, { headers: { Authorization: authHeader } }).then((res) => {
-            console.log(res);
+            // console.log(res);
             if (res.status === 200) {
-                console.log(res.data)
+                // console.log(res.data)
                 setCurrentChat(res.data.chat[0]);
+                setSearchedChat('')
+                setAllChats(allChatsBackup)
+                setUpdateSideBar(updateSideBar+1)
+                socket.emit('join-chat', res.data.chat[0])
                 // setLoading(false)
             }
         }).catch((err) => {
@@ -52,22 +64,50 @@ const ChatPage = () => {
         })
     }
 
+    const sendMessage = async (e) => {
+        if (e.key === "Enter" && newMessage) {
+            socket.emit("stop-typing", selectedChat._id);
+            try {
+                // const { data } = await axios.post(
+                //   `${process.env.REACT_APP_URL}/message`,
+                //   {
+                //     message: newMessage,
+                //     chatId: selectedChat,
+                //   },
+                //   {
+                //     headers: {
+                //       "Content-type": "application/json",
+                //       Authorization: `Bearer ${user.token}`,
+                //     },
+                //   }
+                // );
 
+                setNewMessage("");
+                // setShowEmojiBox(false);
+                // socket.emit("new-message", data);
+                // setMessages([...messages, data]);
+            } catch (error) {
+                toast.error(error);
+            }
+        }
+    };
 
     const fetchChat = async (e, chat) => {
         e.preventDefault();
-        console.log(chat)
+        // console.log("CHAT: ", chat)
 
-        const finalChatObj = { senderId: user.id, receiver: chat }
-        console.log(finalChatObj)
+        const finalChatObj = { senderId: user.id, chatObj: chat }
+        // console.log("Final Object", finalChatObj)
         const authHeader = createAuthHeader(token)
 
-        console.log(authHeader);
+        // console.log(authHeader);
         await apiURL.post('/api/v1/chat/get', finalChatObj, { headers: { Authorization: authHeader } }).then((res) => {
-            console.log(res);
+            // console.log(res);
             if (res.status === 200) {
-                console.log(res.data)
-                setCurrentChat(res.data.chat[0]);
+                // console.log(res)
+                // console.log(res.data)
+                setCurrentChat(res.data.chat);
+                socket.emit('join-chat', res.data.chat)
                 // setLoading(false)
             }
         }).catch((err) => {
@@ -104,7 +144,8 @@ const ChatPage = () => {
             // console.log(res);
             if (res.status === 200) {
                 // console.log(res.data)
-                setAllSearchedChats(res.data.users)
+                setAllSearchedUsers(res.data.users)
+                setAllChatsBackup(allChats);
                 setAllChats([]);
                 setLoading(false)
             }
@@ -128,14 +169,14 @@ const ChatPage = () => {
         apiURL.get('/api/v1/chat/all', {
             headers: { Authorization: authHeader }
         }).then((res) => {
-            console.log(res.data, res.status);
+            // console.log(res.data, res.status);
             if (res.status === 201) {
                 console.log(res.data.chats)
                 setAllChats(res.data.chats)
                 setLoading(false)
             }
         }).catch((err) => {
-            console.log(err?.response?.data?.message)
+            // console.log(err?.response?.data?.message)
             toast({
                 title: err?.response?.data?.message,
                 status: "error",
@@ -146,8 +187,53 @@ const ChatPage = () => {
             setLoading(false)
         })
         setLoading(false)
-    }, [token, toast]);
+    }, [token, toast,updateSideBar]);
 
+
+    useEffect(() => {
+        socket = io(`http://localhost:3000/`);
+        // console.log(user)
+        socket.emit('setup', user);
+        socket.on('connected', () => setSocketConnected(true))
+        socket.on('typing', () => setIsTyping(true))
+        socket.on('stop-typing', () => setIsTyping(false))
+    }, [])
+
+    // useEffect(()=>{
+    //     fetchMessages();
+
+    //     selectedChatCompare=selectedChat;
+    // },[selectedChat])
+
+    // useEffect(() => {
+    //     socket.on("message-received", (newMessageReceived) => {
+
+    //         setMessages([...messages, newMessageReceived]);
+
+    //     });
+    // }, []);
+
+
+    // const typingHandler = (e) => {
+    //     setNewMessage(e.target.value);
+
+    //     if (!socketConnected) return;
+
+    //     if (!isTyping) {
+    //       setTyping(true);
+    //       socket.emit("typing", selectedChat._id);
+    //     }
+    //     let lastTypingTime = new Date().getTime();
+    //     var timerLength = 3000;
+    //     setTimeout(() => {
+    //       var timeNow = new Date().getTime();
+    //       var timeDiff = timeNow - lastTypingTime;
+    //       if (timeDiff >= timerLength && typing) {
+    //         socket.emit("stop-typing", selectedChat._id);
+    //         setTyping(false);
+    //       }
+    //     }, timerLength);
+    //   };
 
 
     return (
@@ -186,20 +272,22 @@ const ChatPage = () => {
                                     </Flex>
                                 )
                             }
-                            )):(
-                                allSearchedChats?.map((chat)=>{
+                            )) : (
+                                allSearchedUsers?.map((user) => {
                                     return (
-                                        <Flex key={chat.id} width={'100%'} minHeight={'8vh'} onClick={(e) => { fetchChatViaSearch(e, chat) }}>
-                                            <SearchedNames chat={{ ...chat }} />
+                                        <Flex key={user.id} width={'100%'} minHeight={'8vh'} onClick={(e) => { fetchChatViaSearch(e, user) }}>
+                                            <SearchedNames chat={{ ...user }} />
                                         </Flex>
                                     )
                                 })
                             )
-                    )}
+                        )}
                     </Flex>
                 </Flex>
                 <Flex height={'85vh'} width={'60%'} sx={{ borderWidth: '1px 1px 1px 0', borderColor: 'white', borderRadius: '0 20px 20px 0' }}>
-                    {currentChat && <Chat chatData={{ ...currentChat }} />}
+
+                    {/* {console.log("Current chat: ",currentChat)} */}
+                    {currentChat && <Chat chatData={{ ...currentChat }} socketObj={{socket}} />}
                 </Flex>
             </Flex>
         </Flex>
