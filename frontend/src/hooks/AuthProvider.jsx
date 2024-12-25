@@ -13,7 +13,7 @@ const AuthProvider = ({ children }) => {
 
     const toast = useToast();
 
-    const loginAction = async (data) => {
+    const loginAction = async (data,successCallback) => {
         console.log(data)
         try {
             await apiURL.post('/api/v1/login', data).then((res) => {
@@ -28,6 +28,7 @@ const AuthProvider = ({ children }) => {
                     setUser(res.data.userData);
                     setToken(res.data.accessToken);
                     localStorage.setItem("userInfo", JSON.stringify(res.data));
+                    successCallback();
                     // navigate("/chats");
                     return true;
                 }
@@ -42,9 +43,11 @@ const AuthProvider = ({ children }) => {
                     isClosable: true,
                     position: "bottom"
                 })
+                return false;
             })
     } catch (err) {
         console.error(err);
+        return false;
     }
 };
 

@@ -1,4 +1,4 @@
-import { Flex, Input, InputGroup, InputRightElement, Spinner, useToast } from "@chakra-ui/react"
+import { border, Button, Flex, FormControl, IconButton, Input, InputGroup, InputRightElement, Menu, MenuButton, MenuItem, MenuList, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, Spinner, useDisclosure, useToast } from "@chakra-ui/react"
 import ChatNames from "../components/ChatNames"
 import { IoMdAdd, IoMdSearch } from "react-icons/io";
 import Chat from "../components/Chat";
@@ -7,16 +7,24 @@ import { apiURL, createAuthHeader } from "../config/config";
 import { useAuth } from "./../hooks/AuthProvider";
 import SearchedNames from "../components/SearchNames";
 import { io } from 'socket.io-client';
-
+import { FaGear } from 'react-icons/fa6';
+import { RxExit } from 'react-icons/rx';
+import { VscAccount } from 'react-icons/vsc';
+import { useNavigate } from "react-router-dom";
+import NewGroupChat from "../components/NewGroupChat";
 
 let socket, selectedChatCompare;
 
 const ChatPage = () => {
 
-    const { user, token } = useAuth();
+    const { user, token, logOut } = useAuth();
+
+    const { isOpen: isSoloChatOpen, onOpen: onSoloChatOpen, onClose: onSoloChatClose } = useDisclosure()
+    const { isOpen: isGroupChatOpen, onOpen: onGroupChatOpen, onClose: onGroupChatClose } = useDisclosure()
+
 
     const [chatData, setChatData] = useState({});
-    const [updateSideBar,setUpdateSideBar]=useState(1);
+    const [updateSideBar, setUpdateSideBar] = useState(1);
     const [allChats, setAllChats] = useState([]);
     const [allChatsBackup, setAllChatsBackup] = useState([]);
     const [allSearchedUsers, setAllSearchedUsers] = useState([]);
@@ -28,6 +36,7 @@ const ChatPage = () => {
 
 
     const toast = useToast();
+    const navigate = useNavigate();
 
 
     //TODO: make different component for searched users and corresponding fetch method
@@ -47,7 +56,7 @@ const ChatPage = () => {
                 setCurrentChat(res.data.chat[0]);
                 setSearchedChat('')
                 setAllChats(allChatsBackup)
-                setUpdateSideBar(updateSideBar+1)
+                setUpdateSideBar(updateSideBar + 1)
                 socket.emit('join-chat', res.data.chat[0])
                 // setLoading(false)
             }
@@ -124,6 +133,10 @@ const ChatPage = () => {
     }
 
 
+    const scrollToBottom = (callback) => {
+        callback();
+    }
+
     const searchChat = async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -163,6 +176,13 @@ const ChatPage = () => {
     }
 
     useEffect(() => {
+        if (!user) {
+            navigate("/");
+        }
+    }, [user, navigate])
+
+
+    useEffect(() => {
         setLoading(true);
         const authHeader = createAuthHeader(token);
 
@@ -177,6 +197,9 @@ const ChatPage = () => {
             }
         }).catch((err) => {
             // console.log(err?.response?.data?.message)
+            if (err?.response?.data?.status === 401) {
+                navigate('/')
+            }
             toast({
                 title: err?.response?.data?.message,
                 status: "error",
@@ -187,7 +210,7 @@ const ChatPage = () => {
             setLoading(false)
         })
         setLoading(false)
-    }, [token, toast,updateSideBar]);
+    }, [token, toast, updateSideBar]);
 
 
     useEffect(() => {
@@ -197,7 +220,8 @@ const ChatPage = () => {
         socket.on('connected', () => setSocketConnected(true))
         socket.on('typing', () => setIsTyping(true))
         socket.on('stop-typing', () => setIsTyping(false))
-    }, [])
+    }, [user])
+
 
     // useEffect(()=>{
     //     fetchMessages();
@@ -244,7 +268,17 @@ const ChatPage = () => {
                         {/* <Flex width={'20%'} align={'center'} justify={'center'}>
                             <IoMenu size={40}/>
                         </Flex> */}
-                        <Flex width={'80%'} >
+                        <Flex width={'15%'} align={'center'} justify={'center'} outline={'none'}>
+                            <Menu>
+                                <MenuButton display={'flex'} alignItems={'center'} justifyContent={'center'} border={'none'} _focus={{ outline: 'none' }} as={IconButton} icon={<FaGear size={'30'} color="white" />} aria-label="Setting" variant={'unstyled'} />
+                                <MenuList>
+                                    <MenuItem as={Button} color={'black'} icon={<VscAccount size={'20'} />}>Profile</MenuItem>
+                                    <MenuItem color={'black'} onClick={(e) => { e.preventDefault(); logOut(); navigate('/'); }} icon={<RxExit size={'20'} />}>Logout</MenuItem>
+                                </MenuList>
+                            </Menu>
+
+                        </Flex>
+                        <Flex width={'70%'} align={'center'} justify={'center'} outline={'none'}>
                             <InputGroup sx={{ height: "100%", width: "100%", color: "white", border: '1px solid #cecccc', outline: 'none', borderRadius: '25px', overflow: 'hidden' }}>
                                 <Input id="searchBar" borderLeftRadius={'25px'} borderRightRadius={'none'} width={'80%'} value={searchedChat} _hover={{ outline: 'none' }} _focus={{ border: '3px solid #fff', outline: 'none' }} _active={{ border: '3px solid #fff', outline: 'none' }} sx={{ color: "white", outline: 'none' }} _placeholder={{ color: '#cecccc' }} onChange={(e) => {
                                     e.preventDefault();
@@ -256,27 +290,39 @@ const ChatPage = () => {
                             </InputGroup>
                         </Flex>
                         <Flex width={'10%'} aspectRatio={'1/1'} borderRadius={'100%'} border={'1px solid white'} align={'center'} justify={'center'} >
-                            <IoMdAdd size={30} className="chatIcons" style={{ cursor: 'pointer' }} title="New Chat" onClick={(e) => {
-                                e.preventDefault();
-                                const search = document.getElementById('searchBar');
-                                search.focus();
-                            }} />
+                            <Menu>
+                                <MenuButton display={'flex'} alignItems={'center'} justifyContent={'center'} border={'none'} _focus={{ outline: 'none' }} as={IconButton} icon={<IoMdAdd size={'30'} color="white" />} aria-label="Setting" variant={'unstyled'} />
+                                <MenuList>
+                                    <MenuItem as={Button} color={'black'} title="New Chat" onClick={(e) => {
+                                        e.preventDefault();
+                                        onSoloChatOpen();
+                                        // const search = document.getElementById('searchBar');
+                                        // search.focus();
+                                    }} >New Chat</MenuItem>
+                                    <MenuItem as={Button} color={'black'} onClick={(e) => {
+                                        e.preventDefault();
+                                        onGroupChatOpen();
+                                        // const search = document.getElementById('searchBar');
+                                        // search.focus();
+                                    }} >New Group Chat</MenuItem>
+                                </MenuList>
+                            </Menu>
                         </Flex>
                     </Flex>
-                    <Flex direction={'column'} width={'100%'} align={'center'} height={'75vh'} overflowY={'auto'}>
+                    <Flex direction={'column'} width={'100%'} maxWidth={'100%'} align={'center'} height={'75vh'} overflowY={'auto'}>
                         {loading ? <Spinner color="white.700" size={'lg'} marginTop={'50%'} /> : (
                             allChats.length > 0 ? (allChats?.map((chat) => {
                                 return (
-                                    <Flex key={chat._id} width={'100%'} minHeight={'8vh'} onClick={(e) => { fetchChat(e, chat) }}>
-                                        <ChatNames chat={{ ...chat }} />
+                                    <Flex key={chat._id} width={'100%'} minWidth={'100%'} maxWidth={'100%'} minHeight={'8vh'} onClick={(e) => { fetchChat(e, chat); scrollToBottom(); }}>
+                                        <ChatNames chat={{ ...chat }} autoScrollMethod={scrollToBottom} />
                                     </Flex>
                                 )
                             }
                             )) : (
                                 allSearchedUsers?.map((user) => {
                                     return (
-                                        <Flex key={user.id} width={'100%'} minHeight={'8vh'} onClick={(e) => { fetchChatViaSearch(e, user) }}>
-                                            <SearchedNames chat={{ ...user }} />
+                                        <Flex key={user.id} width={'100%'} maxWidth={'100%'} minHeight={'8vh'} onClick={(e) => { fetchChatViaSearch(e, user); scrollToBottom(); }}>
+                                            <SearchedNames chat={{ ...user }} autoScrollMethod={scrollToBottom} />
                                         </Flex>
                                     )
                                 })
@@ -287,9 +333,42 @@ const ChatPage = () => {
                 <Flex height={'85vh'} width={'60%'} sx={{ borderWidth: '1px 1px 1px 0', borderColor: 'white', borderRadius: '0 20px 20px 0' }}>
 
                     {/* {console.log("Current chat: ",currentChat)} */}
-                    {currentChat && <Chat chatData={{ ...currentChat }} socketObj={{socket}} />}
+                    {currentChat && <Chat chatData={{ ...currentChat }} socketObj={{ socket }} />}
                 </Flex>
             </Flex>
+            <Modal isOpen={isSoloChatOpen} onClose={onSoloChatClose} scrollBehavior="inside" isCentered>
+                <ModalOverlay />
+                <ModalContent>
+                    <ModalHeader>New Chat</ModalHeader>
+                    <ModalCloseButton />
+                    <ModalBody>
+                        Lorem ipsum dolor sit amet consectetur adipisicing elit. Doloremque alias soluta labore blanditiis, minima aliquid eos consequatur. Asperiores aut laborum doloremque quos voluptate delectus impedit aliquam. Facere iure temporibus fuga!
+                        Lorem, ipsum dolor sit amet consectetur adipisicing elit. Odio consectetur molestias adipisci magni magnam voluptatum quidem vel tempora perferendis earum tempore cumque, nostrum libero illo maxime ipsam, cupiditate quis at?
+                        Lorem ipsum dolor sit, amet consectetur adipisicing elit. Quidem quam ipsa alias magnam odit fugit cupiditate minima est ex, doloremque, corrupti quo enim impedit delectus pariatur iure quia repellat excepturi.
+                        Lorem ipsum dolor sit amet consectetur adipisicing elit. Aliquam unde quia modi ducimus cumque doloribus dignissimos consectetur labore non odio debitis quos assumenda error commodi facilis totam deleniti, cupiditate incidunt!
+                        Quia animi nisi vitae magnam quos harum sint consequuntur quis autem ex quae veniam aspernatur commodi, distinctio voluptatem libero odio error facilis, saepe necessitatibus dolor eveniet at eos. Vel, ratione.
+                        Quae sint officiis laborum fugit, necessitatibus iste officia cum similique maiores quis iusto sapiente magni voluptate distinctio, aspernatur, vel hic ipsum perspiciatis non exercitationem eveniet dolore asperiores odio ut. Saepe?
+                        Natus nam repellendus debitis minus accusamus, consectetur sit cumque odit sapiente modi saepe velit quasi odio est praesentium rerum consequuntur dolor aliquid non quam quisquam! Corrupti numquam rerum animi temporibus!
+                        Numquam autem necessitatibus, laborum rerum ad non nam asperiores id modi! Et animi ipsa possimus eveniet reiciendis dolores, quasi distinctio iusto quidem. Quibusdam voluptate aliquam itaque fuga in incidunt dolorem.
+                    </ModalBody>
+                    <ModalFooter>
+
+                    </ModalFooter>
+                </ModalContent>
+            </Modal>
+            <Modal isOpen={isGroupChatOpen} onClose={onGroupChatClose} scrollBehavior="inside" isCentered>
+                <ModalOverlay />
+                <ModalContent>
+                    <ModalHeader>New Group Chat</ModalHeader>
+                    <ModalCloseButton />
+                    <ModalBody>
+                        <NewGroupChat/>
+                    </ModalBody>
+                    <ModalFooter>
+
+                    </ModalFooter>
+                </ModalContent>
+            </Modal>
         </Flex>
     )
 }

@@ -1,7 +1,7 @@
 /* eslint-disable react/prop-types */
-import { Flex, Input, InputGroup, InputRightElement, useToast } from "@chakra-ui/react"
+import { Box, Flex, Input, InputGroup, InputRightElement, Text, useToast } from "@chakra-ui/react"
 import { IoMdSend } from "react-icons/io"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useAuth } from "../hooks/AuthProvider";
 import { apiURL, createAuthHeader } from "../config/config";
 
@@ -17,6 +17,8 @@ const Chat = ({ chatData, socketObj }) => {
 
     const { user, token } = useAuth()
     const toast = useToast();
+    const msgRef = useRef(null);
+
 
     const handleTyping = (e) => {
         if (!isTyping) {
@@ -59,6 +61,7 @@ const Chat = ({ chatData, socketObj }) => {
                     setIsMsgSent(true);
                     setCurrChatData(res.data.chatData);
                     setCurrMsg('');
+                    scrollToBottom();
                     // setAllMsgs(res.data.chatData.messages)
                 }
             }).catch((err) => {
@@ -68,6 +71,9 @@ const Chat = ({ chatData, socketObj }) => {
 
     }
 
+    const scrollToBottom=()=>{
+        msgRef?.current?.lastElementChild?.scrollIntoView();
+    }
 
     useEffect(() => {
 
@@ -80,6 +86,7 @@ const Chat = ({ chatData, socketObj }) => {
             if (res.status === 200) {
                 console.log(res.data)
                 setAllMsgs(res.data)
+                scrollToBottom();
             }
         }).catch((err) => {
             console.log(err?.response?.data?.message)
@@ -95,26 +102,41 @@ const Chat = ({ chatData, socketObj }) => {
 
     return (
         <Flex height={'85vh'} width={'100%'} direction={'column'} borderRadius={'0 20px 20px 0'} overflow={'hidden'}>
-            <Flex height={'10vh'} width={"100%"} direction={'column'} align={'center'} paddingLeft={'2vh'} borderBottom={'2px solid white'}>
-                <Flex height={'60%'} width={"100%"} fontSize={'2xl'} align={'center'} fontWeight={'semibold'} textTransform={'capitalize'}>
-                    {chatData?.chatname}
+            <Flex height={'10vh'} width={"100%"} direction={'row'} align={'center'} borderBottom={'2px solid white'}>
+                <Flex height={'100%'} width={'20%'} align={'center'} justify={'center'}>
+                    <Box height={'80%'} aspectRatio={'1/1'} borderRadius={'50%'} border={'2px solid white'}>
+                        {/* <img src={}/> */}
+
+                    </Box>
                 </Flex>
-                <Flex height={'40%'} width={"100%"} fontWeight={'normal'} align={'center'}>
-                    Members: {chatData?.members.length}
+                <Flex height={'100%'} width={"80%"} direction={'column'} align={'center'} paddingLeft={'2vh'}>
+                    <Flex height={'60%'} width={"100%"} fontSize={'2xl'} align={'center'} fontWeight={'semibold'} textTransform={'capitalize'}>
+                        {chatData?.chatname}
+                    </Flex>
+                    {chatData?.members.length > 2 && <Flex height={'40%'} width={"100%"} fontWeight={'normal'} align={'center'}>
+                        Members: {chatData?.members.length}
+                    </Flex>}
                 </Flex>
             </Flex>
-            <Flex height={'70vh'} width={'100%'} direction={'column'} overflowY={'auto'}>
+            <Flex height={'70vh'} width={'100%'} direction={'column'} overflowY={'auto'} ref={msgRef}>
                 {/* {} */}
                 {allMsgs.length > 0 ?
                     (allMsgs.map((msg) => {
                         return (
-                            <Flex direction={'row'} key={msg._id} min-height={'fit-content'} marginTop={'15px'} justify={msg.sender._id === user.id ? 'flex-end' : 'flex-start'}>
-                                <Flex height={'100%'} width={'fit-content'} max-width={"40vw"} direction={'column'} backgroundColor={'rgba(255,255,255,0.2)'}>
-                                    <Flex height={'fit-content'} width={"100%"} backgroundColor={'rgba(255,255,255,0.1)'} textTransform={'capitalize'} padding={"0 2%"}>
-                                        {msg.sender.username}
+                            <Flex direction={'row'} key={msg._id} min-height={'15vh'} maxHeight={'fit-content'} marginTop={'15px'} justify={msg.sender._id === user.id ? 'flex-end' : 'flex-start'} gap={'2'} padding={'2'}>
+                                {msg.sender._id !== user.id && <Flex height={'100%'}>
+                                    <Box height={'5vh'} aspectRatio={'1/1'} borderRadius={'50%'} border={'1px solid white'}>
+                                        {/* <img src={} /> */}
+                                    </Box>
+                                </Flex>}
+                                <Flex height={'100%'} max-width={"30vw"} direction={'column'} >
+                                    <Flex height={'fit-content'} width={"100%"} fontWeight={'bold'} textTransform={'capitalize'} padding={"0 2%"} justify={msg.sender._id === user.id ? 'flex-end' : 'flex-start'}>
+                                        {(msg.sender._id !== user.id && msg.sender.username) || "You"}
                                     </Flex>
-                                    <Flex height={'fit-content'} max-width={'100%'} sx={{ textWrap: 'pretty' }} padding={"0 2%"}>
-                                        {msg.messageContent}
+                                    <Flex height={'fit-content'}  backgroundColor={'rgba(255,255,255,0.2)'} borderRadius={'10px'} paddingX={'3'} paddingY={'1'}>
+                                        <Text height={'100%'} maxWidth={'20vw'} sx={{ wordWrap: 'break-word', overflow: 'hidden' }}>
+                                            {msg.messageContent}
+                                        </Text>
                                     </Flex>
                                 </Flex>
                             </Flex>

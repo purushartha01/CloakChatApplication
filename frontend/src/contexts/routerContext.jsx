@@ -36,7 +36,10 @@ const useRouters = () => {
         {
             path: "/chats",
             element: <ChatPage />
-        },
+        }, {
+            path: "/",
+            element: <HomePage />
+        }
     ]
 
     const mainRoutes = [{
