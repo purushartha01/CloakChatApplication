@@ -52,6 +52,8 @@ const NewGroupChat = (props) => {
                     isClosable: true,
                     position: "bottom"
                 })
+                props.updaterMethod(prev=>prev+1);
+                props.onCloseModal();
                 return true;
             }
         })

@@ -401,7 +401,7 @@ const ChatPage = () => {
                             {searchedChatLoading ? <Spinner color="white.700" size={'lg'} marginTop={'50%'} /> : (
                                 allSearchedUsers?.map((user) => {
                                     return (
-                                        <Flex key={user.id} width={'100%'} maxWidth={'100%'} minHeight={'5vh'} onClick={(e) => { fetchChatViaSearch(e, user); }}>
+                                        <Flex key={user.id} width={'100%'} maxWidth={'100%'} minHeight={'5vh'} onClick={(e) => { fetchChatViaSearch(e, user); setAllSearchedUsers(); window.location.reload();}}>
                                             <SearchedNames chat={{ ...user }} autoScrollMethod={scrollToBottom} />
                                         </Flex>
                                     )
@@ -424,7 +424,7 @@ const ChatPage = () => {
                         <Input type="text" outline={'1px solid blue'} value={chatGroupName} maxLength={'50'}/>
                     </FormControl> */}
                     <ModalBody>
-                        <NewGroupChat usersList={allActiveChats} updaterMethod={setUpdateSideBar} />
+                        <NewGroupChat usersList={allActiveChats} updaterMethod={setUpdateSideBar} onCloseModal={onGroupChatClose}/>
                     </ModalBody>
                     <ModalFooter>
 
