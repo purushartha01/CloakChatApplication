@@ -96,6 +96,10 @@ const Register = () => {
                             position: "bottom"
                         })
 
+                        setEmail('')
+                        setPassword('')
+                        setConfirmPassword('')
+                        setUsername('')
                         // localStorage.setItem("user", JSON.stringify(res.data));
                         setLoading(false);
                         // navigate("/chats");

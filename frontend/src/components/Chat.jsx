@@ -104,9 +104,9 @@ const Chat = ({ chatData, socketObj }) => {
         <Flex height={'85vh'} width={'100%'} direction={'column'} borderRadius={'0 20px 20px 0'} overflow={'hidden'}>
             <Flex height={'10vh'} width={"100%"} direction={'row'} align={'center'} borderBottom={'2px solid white'}>
                 <Flex height={'100%'} width={'20%'} align={'center'} justify={'center'}>
-                    <Box height={'80%'} aspectRatio={'1/1'} borderRadius={'50%'} border={'2px solid white'}>
+                    <Box height={'80%'} display={'flex'} aspectRatio={'1/1'} borderRadius={'50%'} border={'2px solid white'} background={'rgba(255,255,255,0.2)'} alignItems={'center'} fontSize={'1.5rem'} justifyContent={'center'} textTransform={'capitalize'}>
                         {/* <img src={}/> */}
-
+                        {chatData?.isGroup ? chatData?.chatname[0] :chatData?.members[0]._id===user.id ? chatData?.members[1]?.username[0] : chatData?.members[0].username[0]}
                     </Box>
                 </Flex>
                 <Flex height={'100%'} width={"80%"} direction={'column'} align={'center'} paddingLeft={'2vh'}>

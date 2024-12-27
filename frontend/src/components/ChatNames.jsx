@@ -11,7 +11,8 @@ const ChatNames = ({ chat }) => {
     return (
         <Flex width={'100%'} minWidth={'100%'} overflow={'hidden'} minHeight={'100%'} direction={'row'} _hover={{ background: 'rgba(255,255,255,0.1)', cursor: 'pointer' }} marginTop={'1.5'}>
             <Flex height={'100%'} width={'20%'} align={'center'} justify={'center'}>
-                <Flex height={'80%'} aspectRatio={'1/1'} borderRadius={'50%'} border={'1px solid white'}>
+                <Flex height={'80%'} aspectRatio={'1/1'} borderRadius={'50%'} border={'1px solid white'} background={'rgba(255,255,255,0.2)'} align={'center'} justify={'center'} textTransform={'capitalize'}>
+                {chatObj.isGroup ? chatObj.chatname[0] : chatObj?.members[0]._id===user.id ? chatObj?.members[1]?.username[0] : chatObj?.members[0].username[0]}
                 </Flex>
             </Flex>
             <Flex height={'100%'} width={'70%'} align={'center'} overflow={'hidden'} textOverflow={'ellipsis'}>

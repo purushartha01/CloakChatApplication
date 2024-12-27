@@ -309,16 +309,19 @@ const ChatPage = () => {
                             </Menu>
 
                         </Flex>
-                        <Flex width={'70%'} align={'center'} justify={'center'} outline={'none'}>
-                            <InputGroup sx={{ height: "100%", width: "100%", color: "white", border: '1px solid #cecccc', outline: 'none', borderRadius: '25px', overflow: 'hidden' }}>
-                                <Input id="searchBar" borderLeftRadius={'25px'} borderRightRadius={'none'} width={'80%'} value={searchedChatLocal} _hover={{ outline: 'none' }} _focus={{ border: '3px solid #fff', outline: 'none' }} _active={{ border: '3px solid #fff', outline: 'none' }} sx={{ color: "white", outline: 'none' }} _placeholder={{ color: '#cecccc' }} onChange={(e) => {
+                        <Flex width={'70%'} align={'center'} fontSize={'1.5rem'} fontWeight={'bold'} justify={'left'} outline={'none'}>
+                            {/* < sx={{ height: "100%", width: "100%", color: "white", border: '1px solid #cecccc', outline: 'none', borderRadius: '25px', overflow: 'hidden' }}>
+                                {/* <Input id="searchBar" borderLeftRadius={'25px'} borderRightRadius={'none'} width={'80%'} value={searchedChatLocal} _hover={{ outline: 'none' }} _focus={{ border: '3px solid #fff', outline: 'none' }} _active={{ border: '3px solid #fff', outline: 'none' }} sx={{ color: "white", outline: 'none' }} _placeholder={{ color: '#cecccc' }} onChange={(e) => {
                                     e.preventDefault();
                                     setSearchedChatLocal(e.target.value);
                                 }} placeholder="Search" />
                                 <InputRightElement width={'20%'} height={'100%'} borderLeftRadius={'none'} borderRightRadius={'25px'}>
                                     <IoMdSearch size={'30'} className="chatIcons" style={{ cursor: 'pointer' }} title="Search" onClick={() => { }} />
-                                </InputRightElement>
-                            </InputGroup>
+                                </InputRightElement> */}
+                            <Flex height={'100%'} direction={'row'}>
+                                <Flex width={'40px'} aspectRatio={'1/1'} border={'1px solid white'} borderRadius={'50%'} marginRight={2} background={'rgba(255,255,255,0.2)'} align={'center'} justify={'center'} textTransform={'capitalize'}>{user.username[0]}</Flex>
+                                {user.username}
+                            </Flex>
                         </Flex>
                         <Flex width={'10%'} aspectRatio={'1/1'} borderRadius={'100%'} border={'1px solid white'} align={'center'} justify={'center'} >
                             <Menu placement="right">
