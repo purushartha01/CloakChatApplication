@@ -4,7 +4,7 @@ import { useAuth } from "../hooks/AuthProvider";
 
 const ChatNames = ({ chat }) => {
     // console.log(chat);
-    const {user}=useAuth();
+    const { user } = useAuth();
 
     const [chatObj, setChatObj] = useState(chat);
 
@@ -18,7 +18,7 @@ const ChatNames = ({ chat }) => {
                 <Flex direction={'column'} height={'80%'}>
                     <Text fontSize={'2xl'} fontWeight={'medium'} overflow={'hidden'} textOverflow={'ellipsis'}>
                         {/* {chatObj?.chatname} */}
-                        {chatObj?.members[0]._id===user.id ? chatObj?.members[1]?.username : chatObj?.members[0].username}
+                        {chatObj.isGroup ? chatObj.chatname : chatObj?.members[0]._id===user.id ? chatObj?.members[1]?.username : chatObj?.members[0].username}
                     </Text>
                     <Text fontSize={'md'} fontWeight={'light'} overflow={'hidden'} textOverflow={'ellipsis'}>{chatObj?.latestMsg?.messageContent}</Text>
                 </Flex >

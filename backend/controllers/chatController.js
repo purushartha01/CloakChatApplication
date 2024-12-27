@@ -167,7 +167,7 @@ const createUserChat = async (req, res, next) => {
 const getAllActiveChats = async (req, res, next) => {
   try {
     const { userId } = req.body;
-    if (userId) {
+    if (!userId) {
       return res.send("No User Exists!");
     }
 
@@ -235,7 +235,6 @@ const getChats = async (req, res, next) => {
   try {
     console.log(req.currUserId);
     const chat = await chatModel.find({
-      isGroup: false,
       $or: [
         { members: { $elemMatch: { $eq: req.currUserId } } }
       ],
@@ -259,32 +258,49 @@ const getChats = async (req, res, next) => {
 };
 
 const createGroup = async (req, res) => {
-  if (!req.body.users || !req.body.name) {
-    return res.status(400).send({ message: "Please Fill all the fields" });
+  try {
+    const { members, chatName, chatAdmin } = req.body;
+
+
+    if (!members || !chatName || !chatAdmin) {
+      res.statusCode = 422;
+      throw new Error("Please Fill all the fields");
+    }
+
+    // if (users.length < 2) {
+    //   return res
+    //     .status(400)
+    //     .send("More than 2 users are required to form a group chat");
+    // }
+
+    // users.push(req.user.id);
+
+    const newChat = {
+      chatname: chatName,
+      isGroup: true,
+      members: [...members,chatAdmin],
+      messages: [],
+      chatAdmin: [chatAdmin]
+    }
+
+    
+    console.log("newChat: ", newChat)
+
+    const isChatCreated = await chatModel.create(newChat);
+
+    // const fullGroupChat = await Chat.findOne({ _id: groupChat._id })
+    //   .populate("users", "-password")
+    //   .populate("groupAdmin", "-password");
+
+    if(isChatCreated){
+      res.status(200);
+      res.json({status:'ok', message:'Group Chat created successfully.'})
+    }
+  } catch (err) {
+    console.log(err);
+    res.status(404);
+    next(err);
   }
-
-  var users = JSON.parse(req.body.users);
-
-  if (users.length < 2) {
-    return res
-      .status(400)
-      .send("More than 2 users are required to form a group chat");
-  }
-
-  users.push(req.user.id);
-
-  const groupChat = await Chat.create({
-    chatName: req.body.name,
-    users: users,
-    isGroupChat: true,
-    groupAdmin: req.user.id,
-  });
-
-  const fullGroupChat = await Chat.findOne({ _id: groupChat._id })
-    .populate("users", "-password")
-    .populate("groupAdmin", "-password");
-
-  res.status(200).json(fullGroupChat);
 };
 
 const renameGroup = async (req, res) => {
@@ -361,5 +377,6 @@ module.exports = {
   renameGroup,
   addUserToGroup,
   searchUser,
-  createUserChat
+  createUserChat,
+  getAllActiveChats
 };

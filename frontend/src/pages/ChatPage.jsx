@@ -37,7 +37,7 @@ const ChatPage = () => {
     const [socketConnected, setSocketConnected] = useState(false)
     const [isChat, setIsChat] = useState(true);
 
-    const [allActiveChats,setAllActiveChats]=useState([]);
+    const [allActiveChats, setAllActiveChats] = useState([]);
 
     // const [isChatLoading, setIsChatLoading] = useState()
 
@@ -139,20 +139,29 @@ const ChatPage = () => {
         })
     }
 
-    const getAllActiveChats=async(e)=>{
+    const getAllActiveChats = async (e) => {
         e.preventDefault();
 
-        const finalChatObj = { userId: user.id}
-        
+        const finalChatObj = { userId: user.id }
+        console.log(finalChatObj)
+
         const authHeader = createAuthHeader(token)
 
         // console.log(authHeader);
         await apiURL.post('/api/v1/chat/allCurrent', finalChatObj, { headers: { Authorization: authHeader } }).then((res) => {
-            console.log(res)
+            console.log(res.data.chats);
+            setAllActiveChats(res.data.chats);
         })
-        .catch((err)=>{
-            console.log(err)
-        })
+            .catch((err) => {
+                console.log(err)
+                toast({
+                    title: err?.response?.data?.message,
+                    status: "error",
+                    duration: "3000",
+                    isClosable: true,
+                    position: "bottom"
+                })
+            })
     }
 
     const scrollToBottom = (callback) => {
@@ -292,7 +301,7 @@ const ChatPage = () => {
                         </Flex> */}
                         <Flex width={'15%'} align={'center'} justify={'center'} outline={'none'}>
                             <Menu placement="top-start">
-                                <MenuButton display={'flex'} alignItems={'center'} justifyContent={'center'} border={'none'} _focus={{ outline: 'none' }} as={IconButton} icon={<FaGear size={'30'} color="white"/>} aria-label="Setting" variant={'unstyled'}/>
+                                <MenuButton display={'flex'} alignItems={'center'} justifyContent={'center'} border={'none'} _focus={{ outline: 'none' }} as={IconButton} icon={<FaGear size={'30'} color="white" />} aria-label="Setting" variant={'unstyled'} />
                                 <MenuList>
                                     {/* <MenuItem as={Button} color={'black'} icon={<VscAccount size={'20'} />}>Profile</MenuItem> */}
                                     <MenuItem color={'black'} onClick={(e) => { e.preventDefault(); logOut(); navigate('/'); }} icon={<RxExit size={'20'} />}>Logout</MenuItem>
@@ -324,7 +333,7 @@ const ChatPage = () => {
                                         }} >New Chat</MenuItem>
                                         <MenuItem as={Button} color={'black'} onClick={(e) => {
                                             e.preventDefault();
-                                            setAllActiveChats();
+                                            getAllActiveChats(e);
                                             onGroupChatOpen();
                                             // const search = document.getElementById('searchBar');
                                             // search.focus();
@@ -345,8 +354,8 @@ const ChatPage = () => {
                                     {loading ? <Spinner color="white.700" size={'lg'} marginTop={'50%'} /> : (
                                         allChats.length > 0 && (allChats?.map((chat) => {
                                             return (
-                                                <Flex key={chat._id} width={'100%'} minWidth={'100%'} maxWidth={'100%'} minHeight={'8vh'} onClick={(e) => { fetchChat(e, chat); scrollToBottom(); }}>
-                                                    {!chat?.isGroup && <ChatNames chat={{ ...chat }} autoScrollMethod={scrollToBottom} />}
+                                                !chat?.isGroup && <Flex key={chat._id} width={'100%'} minWidth={'100%'} maxWidth={'100%'} minHeight={'8vh'} onClick={(e) => { fetchChat(e, chat); scrollToBottom(); }}>
+                                                    <ChatNames chat={{ ...chat }} autoScrollMethod={scrollToBottom} />
                                                 </Flex>
                                             )
                                         }
@@ -354,11 +363,11 @@ const ChatPage = () => {
                                     )}
                                 </TabPanel>
                                 <TabPanel>
-                                {loading ? <Spinner color="white.700" size={'lg'} marginTop={'50%'} /> : (
+                                    {loading ? <Spinner color="white.700" size={'lg'} marginTop={'50%'} /> : (
                                         allChats.length > 0 && (allChats?.map((chat) => {
                                             return (
-                                                <Flex key={chat._id} width={'100%'} minWidth={'100%'} maxWidth={'100%'} minHeight={'8vh'} onClick={(e) => { fetchChat(e, chat); scrollToBottom(); }}>
-                                                    {chat?.isGroup && <ChatNames chat={{ ...chat }} autoScrollMethod={scrollToBottom} />}
+                                                chat?.isGroup && <Flex key={chat._id} width={'100%'} minWidth={'100%'} maxWidth={'100%'} minHeight={'8vh'} onClick={(e) => { fetchChat(e, chat); scrollToBottom(); }}>
+                                                    <ChatNames chat={{ ...chat }} autoScrollMethod={scrollToBottom} />
                                                 </Flex>
                                             )
                                         }
@@ -412,7 +421,7 @@ const ChatPage = () => {
                         <Input type="text" outline={'1px solid blue'} value={chatGroupName} maxLength={'50'}/>
                     </FormControl> */}
                     <ModalBody>
-                        <NewGroupChat usersList={} />
+                        <NewGroupChat usersList={allActiveChats} updaterMethod={setUpdateSideBar} />
                     </ModalBody>
                     <ModalFooter>
 
