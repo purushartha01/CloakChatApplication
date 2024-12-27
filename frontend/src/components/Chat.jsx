@@ -111,7 +111,8 @@ const Chat = ({ chatData, socketObj }) => {
                 </Flex>
                 <Flex height={'100%'} width={"80%"} direction={'column'} align={'center'} paddingLeft={'2vh'}>
                     <Flex height={'60%'} width={"100%"} fontSize={'2xl'} align={'center'} fontWeight={'semibold'} textTransform={'capitalize'}>
-                        {chatData?.chatname}
+                        {/* {chatData?.chatname} */}
+                        {chatData?.members[0]._id===user.id ? chatData?.members[1]?.username : chatData?.members[0].username}
                     </Flex>
                     {chatData?.members.length > 2 && <Flex height={'40%'} width={"100%"} fontWeight={'normal'} align={'center'}>
                         Members: {chatData?.members.length}

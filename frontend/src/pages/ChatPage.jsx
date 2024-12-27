@@ -1,4 +1,4 @@
-import { border, Button, Flex, FormControl, FormLabel, IconButton, Input, InputGroup, InputRightElement, Menu, MenuButton, MenuItem, MenuList, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, Spinner, useDisclosure, useToast } from "@chakra-ui/react"
+import { border, Button, Flex, FormControl, FormLabel, IconButton, Input, InputGroup, InputRightElement, Menu, MenuButton, MenuItem, MenuList, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, Portal, Spinner, Tab, TabList, TabPanel, TabPanels, Tabs, useDisclosure, useToast } from "@chakra-ui/react"
 import ChatNames from "../components/ChatNames"
 import { IoMdAdd, IoMdSearch } from "react-icons/io";
 import Chat from "../components/Chat";
@@ -28,18 +28,22 @@ const ChatPage = () => {
     const [allChats, setAllChats] = useState([]);
     const [allChatsBackup, setAllChatsBackup] = useState([]);
     const [allSearchedUsers, setAllSearchedUsers] = useState([]);
+    const [allSearchedChats, setAllSearchedChats] = useState([]);
     const [loading, setLoading] = useState(false);
     const [searchedChatLoading, setSearchedChatLoading] = useState(false);
     const [searchedChat, setSearchedChat] = useState('');
     const [searchedChatLocal, setSearchedChatLocal] = useState('');
     const [currentChat, setCurrentChat] = useState(null);
     const [socketConnected, setSocketConnected] = useState(false)
+    const [isChat, setIsChat] = useState(true);
+
+    const [allActiveChats,setAllActiveChats]=useState([]);
+
     // const [isChatLoading, setIsChatLoading] = useState()
 
 
     const toast = useToast();
     const navigate = useNavigate();
-
 
     //TODO: make different component for searched users and corresponding fetch method
     const fetchChatViaSearch = async (e, currUser) => {
@@ -54,16 +58,17 @@ const ChatPage = () => {
         await apiURL.post('/api/v1/chat/create', finalChatObj, { headers: { Authorization: authHeader } }).then((res) => {
             // console.log(res);
             if (res.status === 200) {
-                // console.log(res.data)
-                setCurrentChat(res.data.chat[0]);
+                console.log(res.data)
+                setCurrentChat(res.data.chat);
                 setSearchedChat('')
                 setAllChats(allChatsBackup)
-                setUpdateSideBar(updateSideBar + 1)
-                socket.emit('join-chat', res.data.chat[0])
+                setUpdateSideBar((prev) => prev + 1)
+                onSoloChatClose();
+                socket.emit('join-chat', res.data.chat)
                 // setLoading(false)
             }
         }).catch((err) => {
-            // console.log(err?.response?.data?.message)
+            console.log(err)
             toast({
                 title: err?.response?.data?.message,
                 status: "error",
@@ -134,6 +139,21 @@ const ChatPage = () => {
         })
     }
 
+    const getAllActiveChats=async(e)=>{
+        e.preventDefault();
+
+        const finalChatObj = { userId: user.id}
+        
+        const authHeader = createAuthHeader(token)
+
+        // console.log(authHeader);
+        await apiURL.post('/api/v1/chat/allCurrent', finalChatObj, { headers: { Authorization: authHeader } }).then((res) => {
+            console.log(res)
+        })
+        .catch((err)=>{
+            console.log(err)
+        })
+    }
 
     const scrollToBottom = (callback) => {
         callback();
@@ -271,10 +291,10 @@ const ChatPage = () => {
                             <IoMenu size={40}/>
                         </Flex> */}
                         <Flex width={'15%'} align={'center'} justify={'center'} outline={'none'}>
-                            <Menu>
-                                <MenuButton display={'flex'} alignItems={'center'} justifyContent={'center'} border={'none'} _focus={{ outline: 'none' }} as={IconButton} icon={<FaGear size={'30'} color="white" />} aria-label="Setting" variant={'unstyled'} />
+                            <Menu placement="top-start">
+                                <MenuButton display={'flex'} alignItems={'center'} justifyContent={'center'} border={'none'} _focus={{ outline: 'none' }} as={IconButton} icon={<FaGear size={'30'} color="white"/>} aria-label="Setting" variant={'unstyled'}/>
                                 <MenuList>
-                                    <MenuItem as={Button} color={'black'} icon={<VscAccount size={'20'} />}>Profile</MenuItem>
+                                    {/* <MenuItem as={Button} color={'black'} icon={<VscAccount size={'20'} />}>Profile</MenuItem> */}
                                     <MenuItem color={'black'} onClick={(e) => { e.preventDefault(); logOut(); navigate('/'); }} icon={<RxExit size={'20'} />}>Logout</MenuItem>
                                 </MenuList>
                             </Menu>
@@ -292,36 +312,61 @@ const ChatPage = () => {
                             </InputGroup>
                         </Flex>
                         <Flex width={'10%'} aspectRatio={'1/1'} borderRadius={'100%'} border={'1px solid white'} align={'center'} justify={'center'} >
-                            <Menu>
+                            <Menu placement="right">
                                 <MenuButton display={'flex'} alignItems={'center'} justifyContent={'center'} border={'none'} _focus={{ outline: 'none' }} as={IconButton} icon={<IoMdAdd size={'30'} color="white" />} aria-label="Setting" variant={'unstyled'} />
-                                <MenuList>
-                                    <MenuItem as={Button} color={'black'} title="New Chat" onClick={(e) => {
-                                        e.preventDefault();
-                                        onSoloChatOpen();
-                                        // const search = document.getElementById('searchBar');
-                                        // search.focus();
-                                    }} >New Chat</MenuItem>
-                                    <MenuItem as={Button} color={'black'} onClick={(e) => {
-                                        e.preventDefault();
-                                        onGroupChatOpen();
-                                        // const search = document.getElementById('searchBar');
-                                        // search.focus();
-                                    }} >New Group Chat</MenuItem>
-                                </MenuList>
+                                <Portal>
+                                    <MenuList zIndex={"banner"}>
+                                        <MenuItem as={Button} color={'black'} title="New Chat" onClick={(e) => {
+                                            e.preventDefault();
+                                            onSoloChatOpen();
+                                            // const search = document.getElementById('searchBar');
+                                            // search.focus();
+                                        }} >New Chat</MenuItem>
+                                        <MenuItem as={Button} color={'black'} onClick={(e) => {
+                                            e.preventDefault();
+                                            setAllActiveChats();
+                                            onGroupChatOpen();
+                                            // const search = document.getElementById('searchBar');
+                                            // search.focus();
+                                        }} >New Group Chat</MenuItem>
+                                    </MenuList>
+                                </Portal>
                             </Menu>
                         </Flex>
                     </Flex>
                     <Flex direction={'column'} width={'100%'} maxWidth={'100%'} align={'center'} height={'75vh'} overflowY={'auto'}>
-                        {loading ? <Spinner color="white.700" size={'lg'} marginTop={'50%'} /> : (
-                            allChats.length > 0 && (allChats?.map((chat) => {
-                                return (
-                                    <Flex key={chat._id} width={'100%'} minWidth={'100%'} maxWidth={'100%'} minHeight={'8vh'} onClick={(e) => { fetchChat(e, chat); scrollToBottom(); }}>
-                                        <ChatNames chat={{ ...chat }} autoScrollMethod={scrollToBottom} />
-                                    </Flex>
-                                )
-                            }
-                            ))
-                        )}
+                        <Tabs defaultIndex={0} isFitted variant={'enclosed'} width={'100%'} id="chatTabs">
+                            <TabList>
+                                <Tab borderRadius={'none'} _selected={{ border: 'none', outline: 'none', background: 'rgba(255,255,255,0.15)', borderRadius: '0 0 0 0' }}>Chats</Tab>
+                                <Tab borderRadius={'none'} _selected={{ border: 'none', outline: 'none', background: 'rgba(255,255,255,0.15)', borderRadius: '0 0 0 0' }}>Groups</Tab>
+                            </TabList>
+                            <TabPanels>
+                                <TabPanel>
+                                    {loading ? <Spinner color="white.700" size={'lg'} marginTop={'50%'} /> : (
+                                        allChats.length > 0 && (allChats?.map((chat) => {
+                                            return (
+                                                <Flex key={chat._id} width={'100%'} minWidth={'100%'} maxWidth={'100%'} minHeight={'8vh'} onClick={(e) => { fetchChat(e, chat); scrollToBottom(); }}>
+                                                    {!chat?.isGroup && <ChatNames chat={{ ...chat }} autoScrollMethod={scrollToBottom} />}
+                                                </Flex>
+                                            )
+                                        }
+                                        ))
+                                    )}
+                                </TabPanel>
+                                <TabPanel>
+                                {loading ? <Spinner color="white.700" size={'lg'} marginTop={'50%'} /> : (
+                                        allChats.length > 0 && (allChats?.map((chat) => {
+                                            return (
+                                                <Flex key={chat._id} width={'100%'} minWidth={'100%'} maxWidth={'100%'} minHeight={'8vh'} onClick={(e) => { fetchChat(e, chat); scrollToBottom(); }}>
+                                                    {chat?.isGroup && <ChatNames chat={{ ...chat }} autoScrollMethod={scrollToBottom} />}
+                                                </Flex>
+                                            )
+                                        }
+                                        ))
+                                    )}
+                                </TabPanel>
+                            </TabPanels>
+                        </Tabs>
                     </Flex>
                 </Flex>
                 <Flex height={'85vh'} width={'60%'} sx={{ borderWidth: '1px 1px 1px 0', borderColor: 'white', borderRadius: '0 20px 20px 0' }}>
@@ -367,14 +412,14 @@ const ChatPage = () => {
                         <Input type="text" outline={'1px solid blue'} value={chatGroupName} maxLength={'50'}/>
                     </FormControl> */}
                     <ModalBody>
-                        <NewGroupChat />
+                        <NewGroupChat usersList={} />
                     </ModalBody>
                     <ModalFooter>
 
                     </ModalFooter>
                 </ModalContent>
             </Modal>
-        </Flex>
+        </Flex >
     )
 }
 

@@ -19,4 +19,7 @@ router.route('/search')
 router.route('/all')
 .get(auth,getChats)
 
+router.route('/allCurrent')
+.post(auth,)
+
 module.exports=router;

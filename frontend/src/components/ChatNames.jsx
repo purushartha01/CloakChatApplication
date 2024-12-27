@@ -1,8 +1,10 @@
 import { Flex, Text } from "@chakra-ui/react"
 import { useState } from "react";
+import { useAuth } from "../hooks/AuthProvider";
 
 const ChatNames = ({ chat }) => {
     // console.log(chat);
+    const {user}=useAuth();
 
     const [chatObj, setChatObj] = useState(chat);
 
@@ -14,7 +16,10 @@ const ChatNames = ({ chat }) => {
             </Flex>
             <Flex height={'100%'} width={'70%'} align={'center'} overflow={'hidden'} textOverflow={'ellipsis'}>
                 <Flex direction={'column'} height={'80%'}>
-                    <Text fontSize={'2xl'} fontWeight={'medium'} overflow={'hidden'} textOverflow={'ellipsis'}>{chatObj?.chatname}</Text>
+                    <Text fontSize={'2xl'} fontWeight={'medium'} overflow={'hidden'} textOverflow={'ellipsis'}>
+                        {/* {chatObj?.chatname} */}
+                        {chatObj?.members[0]._id===user.id ? chatObj?.members[1]?.username : chatObj?.members[0].username}
+                    </Text>
                     <Text fontSize={'md'} fontWeight={'light'} overflow={'hidden'} textOverflow={'ellipsis'}>{chatObj?.latestMsg?.messageContent}</Text>
                 </Flex >
             </Flex>

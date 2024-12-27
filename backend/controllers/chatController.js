@@ -21,16 +21,16 @@ const getCurrChat = async (req, res, next) => {
       .sort({ updatedAt: -1 })
 
 
-      // const msgs=await msgModel.populate(chat,{
-      //   path:"messages"
-      // })
+    // const msgs=await msgModel.populate(chat,{
+    //   path:"messages"
+    // })
 
 
-      // console.log(msgs);
+    // console.log(msgs);
 
     // const updatedChat = await chatModel.findByIdAndUpdate(chat._id, { members: chat.members, messages: chat.messages, chatAdmin: chat.chatAdmin, latestMsg: chat.latestMsg }, { new: true })
     // const updatedChat=await chatModel.findOneAndReplace(chat._id,{chat},{new:true})
-    console.log( "CHAT: ", chat)
+    console.log("CHAT: ", chat)
     //TODO: populate messages subdocument
     // .populate("messages")
 
@@ -62,7 +62,7 @@ const getCurrChat = async (req, res, next) => {
     //   res.json({ status: 'ok',message:"New Chat created", chat: [isChatCreated] })
     // } else {
     res.status(200);
-    res.json({ status: 'ok', message: "Chat found", chat})
+    res.json({ status: 'ok', message: "Chat found", chat })
     // }
     //     .populate("members", "-password")
     // .populate("latestMsg");
@@ -99,7 +99,7 @@ const createUserChat = async (req, res, next) => {
   try {
 
     const { senderId, receiver } = req.body;
-    console.log("DATA: ",senderId, receiver);
+    // console.log("DATA: ",senderId, receiver);
     if (!senderId || !receiver.id) {
       return res.send("No User Exists!");
     }
@@ -143,14 +143,16 @@ const createUserChat = async (req, res, next) => {
       console.log('\n\n')
 
       res.status(200);
-      res.json({ status: 'ok', chat: [isChatCreated] })
+      res.json({ status: 'ok', chat: isChatCreated })
     } else {
 
-      const chatData = userModel.findByIdAndUpdate(chat.id, chat, { new: true })
+      // const chatData=await chatModel.findByIdAndUpdate(chat._id, chat, { new: true })
 
-      console.log("CHAT: ", JSON.stringify(chatData))
+      // const chatData=await chatModel.findById(chat._id);
+      // console.log("CHAT obj: ", JSON.stringify(chatData))
+
       res.status(200);
-      res.json({ status: 'ok', chat: JSON.stringify(chatData) })
+      res.json({ status: 'ok', chat: chat })
     }
 
 
@@ -162,7 +164,41 @@ const createUserChat = async (req, res, next) => {
   }
 }
 
+const getAllActiveChats = async (req, res, next) => {
+  try {
+    const { userId } = req.body;
+    if (userId) {
+      return res.send("No User Exists!");
+    }
 
+    console.log(userId);
+
+    const chats = await chatModel.find({
+      isGroup: false,
+      $and: [
+        { members: { $elemMatch: { $eq: userId } } }
+      ],
+    })
+      .populate("members", "-password")
+      .populate("chatAdmin", "-password")
+      .populate("latestMsg")
+      .populate("messages")
+      .sort({ updatedAt: -1 });
+
+    if (chats.length === 0) {
+      res.statusCode = 404;
+      throw new Error("No Existing chats/contacts found!");
+    } else {
+      res.status(200);
+      res.json({ status: "ok", chats: chats });
+    }
+
+  } catch (err) {
+    console.log(err);
+    res.status(404);
+    next(err);
+  }
+}
 
 const searchUser = async (req, res, next) => {
   try {
