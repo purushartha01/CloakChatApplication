@@ -9,7 +9,7 @@ const NewGroupChat = () => {
     return (
         <FormControl>
             <FormLabel>Enter Chat Name below{`(${chatGroupNameLength}/50)`}:</FormLabel>
-            <Input type="text" value={chatGroupName} maxLength={'50'} onChange={(e) => { e.preventDefault(); setChatGroupName(e.target.value); setChatGroupNameLength(e.target.value.length) }} />
+            <Input type="text" outline={'1px solid blue'} value={chatGroupName} maxLength={'50'} onChange={(e) => { e.preventDefault(); setChatGroupName(e.target.value); setChatGroupNameLength(e.target.value.length) }} />
         </FormControl>
     )
 }

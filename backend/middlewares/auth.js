@@ -35,7 +35,6 @@ module.exports = async (req, res, next) => {
                             sameSite: 'None',
                             maxAge: 24 * 60 * 60 * 1000
                         })
-
                         req.currUserId = foundUser.id;
                         next();
                     }

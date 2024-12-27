@@ -1,4 +1,4 @@
-import { border, Button, Flex, FormControl, IconButton, Input, InputGroup, InputRightElement, Menu, MenuButton, MenuItem, MenuList, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, Spinner, useDisclosure, useToast } from "@chakra-ui/react"
+import { border, Button, Flex, FormControl, FormLabel, IconButton, Input, InputGroup, InputRightElement, Menu, MenuButton, MenuItem, MenuList, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, Spinner, useDisclosure, useToast } from "@chakra-ui/react"
 import ChatNames from "../components/ChatNames"
 import { IoMdAdd, IoMdSearch } from "react-icons/io";
 import Chat from "../components/Chat";
@@ -29,7 +29,9 @@ const ChatPage = () => {
     const [allChatsBackup, setAllChatsBackup] = useState([]);
     const [allSearchedUsers, setAllSearchedUsers] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [searchedChatLoading, setSearchedChatLoading] = useState(false);
     const [searchedChat, setSearchedChat] = useState('');
+    const [searchedChatLocal, setSearchedChatLocal] = useState('');
     const [currentChat, setCurrentChat] = useState(null);
     const [socketConnected, setSocketConnected] = useState(false)
     // const [isChatLoading, setIsChatLoading] = useState()
@@ -42,7 +44,7 @@ const ChatPage = () => {
     //TODO: make different component for searched users and corresponding fetch method
     const fetchChatViaSearch = async (e, currUser) => {
         e.preventDefault();
-        // console.log(chat)
+        console.log(currUser)
 
         const finalChatObj = { senderId: user.id, receiver: currUser }
         // console.log(finalChatObj)
@@ -139,9 +141,9 @@ const ChatPage = () => {
 
     const searchChat = async (e) => {
         e.preventDefault();
-        setLoading(true);
+        setSearchedChatLoading(true);
         if (searchedChat.length === 0) {
-            setLoading(false);
+            setSearchedChatLoading(false);
             return false;
         }
 
@@ -159,8 +161,8 @@ const ChatPage = () => {
                 // console.log(res.data)
                 setAllSearchedUsers(res.data.users)
                 setAllChatsBackup(allChats);
-                setAllChats([]);
-                setLoading(false)
+                // setAllChats([]);
+                setSearchedChatLoading(false)
             }
         }).catch((err) => {
             // console.log(err?.response?.data?.message)
@@ -171,7 +173,7 @@ const ChatPage = () => {
                 isClosable: true,
                 position: "bottom"
             })
-            setLoading(false)
+            setSearchedChatLoading(false)
         })
     }
 
@@ -197,9 +199,9 @@ const ChatPage = () => {
             }
         }).catch((err) => {
             // console.log(err?.response?.data?.message)
-            if (err?.response?.data?.status === 401) {
-                navigate('/')
-            }
+            // if (err?.response?.data?.status === 401) {
+            //     navigate('/')
+            // }
             toast({
                 title: err?.response?.data?.message,
                 status: "error",
@@ -280,12 +282,12 @@ const ChatPage = () => {
                         </Flex>
                         <Flex width={'70%'} align={'center'} justify={'center'} outline={'none'}>
                             <InputGroup sx={{ height: "100%", width: "100%", color: "white", border: '1px solid #cecccc', outline: 'none', borderRadius: '25px', overflow: 'hidden' }}>
-                                <Input id="searchBar" borderLeftRadius={'25px'} borderRightRadius={'none'} width={'80%'} value={searchedChat} _hover={{ outline: 'none' }} _focus={{ border: '3px solid #fff', outline: 'none' }} _active={{ border: '3px solid #fff', outline: 'none' }} sx={{ color: "white", outline: 'none' }} _placeholder={{ color: '#cecccc' }} onChange={(e) => {
+                                <Input id="searchBar" borderLeftRadius={'25px'} borderRightRadius={'none'} width={'80%'} value={searchedChatLocal} _hover={{ outline: 'none' }} _focus={{ border: '3px solid #fff', outline: 'none' }} _active={{ border: '3px solid #fff', outline: 'none' }} sx={{ color: "white", outline: 'none' }} _placeholder={{ color: '#cecccc' }} onChange={(e) => {
                                     e.preventDefault();
-                                    setSearchedChat(e.target.value);
+                                    setSearchedChatLocal(e.target.value);
                                 }} placeholder="Search" />
                                 <InputRightElement width={'20%'} height={'100%'} borderLeftRadius={'none'} borderRightRadius={'25px'}>
-                                    <IoMdSearch size={'30'} className="chatIcons" style={{ cursor: 'pointer' }} title="Search" onClick={searchChat} />
+                                    <IoMdSearch size={'30'} className="chatIcons" style={{ cursor: 'pointer' }} title="Search" onClick={() => { }} />
                                 </InputRightElement>
                             </InputGroup>
                         </Flex>
@@ -311,22 +313,14 @@ const ChatPage = () => {
                     </Flex>
                     <Flex direction={'column'} width={'100%'} maxWidth={'100%'} align={'center'} height={'75vh'} overflowY={'auto'}>
                         {loading ? <Spinner color="white.700" size={'lg'} marginTop={'50%'} /> : (
-                            allChats.length > 0 ? (allChats?.map((chat) => {
+                            allChats.length > 0 && (allChats?.map((chat) => {
                                 return (
                                     <Flex key={chat._id} width={'100%'} minWidth={'100%'} maxWidth={'100%'} minHeight={'8vh'} onClick={(e) => { fetchChat(e, chat); scrollToBottom(); }}>
                                         <ChatNames chat={{ ...chat }} autoScrollMethod={scrollToBottom} />
                                     </Flex>
                                 )
                             }
-                            )) : (
-                                allSearchedUsers?.map((user) => {
-                                    return (
-                                        <Flex key={user.id} width={'100%'} maxWidth={'100%'} minHeight={'8vh'} onClick={(e) => { fetchChatViaSearch(e, user); scrollToBottom(); }}>
-                                            <SearchedNames chat={{ ...user }} autoScrollMethod={scrollToBottom} />
-                                        </Flex>
-                                    )
-                                })
-                            )
+                            ))
                         )}
                     </Flex>
                 </Flex>
@@ -342,18 +336,25 @@ const ChatPage = () => {
                     <ModalHeader>New Chat</ModalHeader>
                     <ModalCloseButton />
                     <ModalBody>
-                        Lorem ipsum dolor sit amet consectetur adipisicing elit. Doloremque alias soluta labore blanditiis, minima aliquid eos consequatur. Asperiores aut laborum doloremque quos voluptate delectus impedit aliquam. Facere iure temporibus fuga!
-                        Lorem, ipsum dolor sit amet consectetur adipisicing elit. Odio consectetur molestias adipisci magni magnam voluptatum quidem vel tempora perferendis earum tempore cumque, nostrum libero illo maxime ipsam, cupiditate quis at?
-                        Lorem ipsum dolor sit, amet consectetur adipisicing elit. Quidem quam ipsa alias magnam odit fugit cupiditate minima est ex, doloremque, corrupti quo enim impedit delectus pariatur iure quia repellat excepturi.
-                        Lorem ipsum dolor sit amet consectetur adipisicing elit. Aliquam unde quia modi ducimus cumque doloribus dignissimos consectetur labore non odio debitis quos assumenda error commodi facilis totam deleniti, cupiditate incidunt!
-                        Quia animi nisi vitae magnam quos harum sint consequuntur quis autem ex quae veniam aspernatur commodi, distinctio voluptatem libero odio error facilis, saepe necessitatibus dolor eveniet at eos. Vel, ratione.
-                        Quae sint officiis laborum fugit, necessitatibus iste officia cum similique maiores quis iusto sapiente magni voluptate distinctio, aspernatur, vel hic ipsum perspiciatis non exercitationem eveniet dolore asperiores odio ut. Saepe?
-                        Natus nam repellendus debitis minus accusamus, consectetur sit cumque odit sapiente modi saepe velit quasi odio est praesentium rerum consequuntur dolor aliquid non quam quisquam! Corrupti numquam rerum animi temporibus!
-                        Numquam autem necessitatibus, laborum rerum ad non nam asperiores id modi! Et animi ipsa possimus eveniet reiciendis dolores, quasi distinctio iusto quidem. Quibusdam voluptate aliquam itaque fuga in incidunt dolorem.
-                    </ModalBody>
-                    <ModalFooter>
+                        <InputGroup>
+                            <Input type="text" value={searchedChat} onChange={(e) => { e.preventDefault(); setSearchedChat(e.target.value); }} outline={'1px solid black'} />
+                            <InputRightElement background={'transparent'}><IconButton icon={<IoMdSearch size={30} onClick={searchChat} />} /></InputRightElement>
+                        </InputGroup>
+                        <Flex minH={'30vh'} width={'100%'}>
+                            {searchedChatLoading ? <Spinner color="white.700" size={'lg'} marginTop={'50%'} /> : (
+                                allSearchedUsers?.map((user) => {
+                                    return (
+                                        <Flex key={user.id} width={'100%'} maxWidth={'100%'} minHeight={'5vh'} onClick={(e) => { fetchChatViaSearch(e, user); }}>
+                                            <SearchedNames chat={{ ...user }} autoScrollMethod={scrollToBottom} />
+                                        </Flex>
+                                    )
+                                }))}
+                        </Flex>
 
-                    </ModalFooter>
+                    </ModalBody>
+                    {/* <ModalFooter>
+
+                    </ModalFooter> */}
                 </ModalContent>
             </Modal>
             <Modal isOpen={isGroupChatOpen} onClose={onGroupChatClose} scrollBehavior="inside" isCentered>
@@ -361,8 +362,12 @@ const ChatPage = () => {
                 <ModalContent>
                     <ModalHeader>New Group Chat</ModalHeader>
                     <ModalCloseButton />
+                    {/* <FormControl>
+                        <FormLabel>Enter Chat Name below{`(${}/50)`}:</FormLabel>
+                        <Input type="text" outline={'1px solid blue'} value={chatGroupName} maxLength={'50'}/>
+                    </FormControl> */}
                     <ModalBody>
-                        <NewGroupChat/>
+                        <NewGroupChat />
                     </ModalBody>
                     <ModalFooter>
 

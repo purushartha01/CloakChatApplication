@@ -99,7 +99,7 @@ const createUserChat = async (req, res, next) => {
   try {
 
     const { senderId, receiver } = req.body;
-    console.log(senderId, receiver);
+    console.log("DATA: ",senderId, receiver);
     if (!senderId || !receiver.id) {
       return res.send("No User Exists!");
     }
@@ -148,9 +148,9 @@ const createUserChat = async (req, res, next) => {
 
       const chatData = userModel.findByIdAndUpdate(chat.id, chat, { new: true })
 
-      // console.log("CHAT: ", JSON.stringify(chatData))
+      console.log("CHAT: ", JSON.stringify(chatData))
       res.status(200);
-      res.json({ status: 'ok', chat: chatData })
+      res.json({ status: 'ok', chat: JSON.stringify(chatData) })
     }
 
 
